@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: artha_mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: artha_qdrant
+    ports:
+      - '6333:6333' # REST API
+      - '6334:6334' # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: artha_backend
+    ports:
+      - '8000:8000'
+    depends_on:
+      - mongodb
+      - qdrant
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - QDRANT_URL=http://qdrant:6333
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: artha_frontend
+    ports:
+      - '8501:8501'
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  qdrant_data:

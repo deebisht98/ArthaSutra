@@ -1,0 +1,9 @@
+pydantic-settings==2.2.1
+fastapi
+uvicorn[standard]
+motor
+qdrant-client
+langgraph
+langchain-openai
+kiteconnect
+tavily-python
