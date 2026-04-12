@@ -1,0 +1,17 @@
+fastapi==0.135.2
+uvicorn[standard]==0.42.0
+streamlit==1.56.0
+motor==3.7.1
+pymongo==4.16.0
+qdrant-client==1.17.1
+kiteconnect==5.1.0
+pydantic-settings==2.2.1
+backtrader==1.9.78.123
+tavily-python==0.7.23
+yfinance==1.2.1
+langgraph==1.1.6
+langchain==1.2.15
+langchain-community==0.4.1
+langchain-openai==1.1.12
+pytest==9.0.3
+ruff==0.15.10
