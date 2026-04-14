@@ -29,7 +29,9 @@ services:
       retries: 5
 
   fastapi:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
     container_name: artha_fastapi
     ports:
       - '8000:8000'
