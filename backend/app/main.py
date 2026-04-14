@@ -2,16 +2,16 @@ import sys
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
-from .core.config import settings
+from .config.settings import settings
 
-# Add root directory to path for importing memory module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+# Ensure the repository root is on the import path for the memory package
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from memory.mongo import mongodb_manager, check_mongo_health
+from memory.qdrant import init_collection, upsert_strategy, search_strategies
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Connect to MongoDB on startup
     print(f"[{settings.ENVIRONMENT}] Application '{settings.PROJECT_NAME}' starting...")
     try:
         await mongodb_manager.connect()
@@ -20,9 +20,15 @@ async def lifespan(app: FastAPI):
         print(f"✗ Failed to connect to MongoDB: {e}")
         raise
 
+    try:
+        await init_collection()
+        print("✓ Qdrant collection initialized")
+    except Exception as e:
+        print(f"✗ Failed to initialize Qdrant collection: {e}")
+        raise
+
     yield
 
-    # Disconnect from MongoDB on shutdown
     print(f"[{settings.ENVIRONMENT}] Application '{settings.PROJECT_NAME}' shutting down...")
     await mongodb_manager.disconnect()
 
@@ -42,23 +48,18 @@ def read_root():
 
 @app.get("/test-mongo")
 async def test_mongo():
-    """Test MongoDB async operations."""
     from memory.mongo import mongodb_manager
 
-    # Insert a test log
     log_id = await mongodb_manager.insert_backtest_log({
         "timestamp": "2026-04-13T18:58:00Z",
         "strategy": "test_strategy",
         "result": "success"
     })
 
-    # Retrieve logs
     logs = await mongodb_manager.get_backtest_logs(limit=5)
-
-    # Convert ObjectIds to strings for JSON serialization
     for log in logs:
-        if '_id' in log:
-            log['_id'] = str(log['_id'])
+        if "_id" in log:
+            log["_id"] = str(log["_id"])
 
     return {
         "inserted_id": log_id,
@@ -67,7 +68,6 @@ async def test_mongo():
 
 @app.get("/test-mongo-collections")
 async def test_mongo_collections():
-    """Smoke test MongoDB collection handles and counts."""
     collection_counts = {
         "backtest_logs": await mongodb_manager.backtest_logs.estimated_document_count(),
         "strategy_lineage": await mongodb_manager.strategy_lineage.estimated_document_count(),
@@ -81,11 +81,31 @@ async def test_mongo_collections():
         "collection_counts": collection_counts
     }
 
+@app.get("/test-qdrant")
+async def test_qdrant():
+    """Smoke test Qdrant vector operations."""
+    import numpy as np
+
+    # Generate a dummy vector of 1536 dimensions
+    dummy_vector = np.random.uniform(-1, 1, 1536).tolist()
+    dummy_payload = {"strategy_name": "SmokeTestStrategy", "version": "1.0"}
+
+    # Upsert the vector
+    point_id = await upsert_strategy(dummy_vector, dummy_payload)
+
+    # Search for similar vectors
+    results = await search_strategies(dummy_vector, top_k=1)
+
+    return {
+        "qdrant_status": "connected",
+        "inserted_id": point_id,
+        "search_results": results,
+        "round_trip_success": bool(results and results[0]["id"] == point_id)
+    }
+
 @app.get("/health")
 async def health_check():
-    """Comprehensive health check including MongoDB."""
     mongo_healthy = await check_mongo_health()
-
     if not mongo_healthy:
         raise HTTPException(status_code=503, detail="MongoDB connection unhealthy")
 

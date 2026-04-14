@@ -5,7 +5,7 @@ motor==3.7.1
 pymongo==4.16.0
 qdrant-client==1.17.1
 kiteconnect==5.1.0
-pydantic-settings==2.2.1
+pydantic-settings==2.10.1
 backtrader==1.9.78.123
 tavily-python==0.7.23
 yfinance==1.2.1

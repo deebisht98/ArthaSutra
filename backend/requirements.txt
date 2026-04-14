@@ -1,4 +1,4 @@
-pydantic-settings==2.2.1
+pydantic-settings==2.10.1
 fastapi==0.135.2
 uvicorn[standard]==0.42.0
 motor==3.7.1

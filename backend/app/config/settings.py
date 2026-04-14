@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str
     OPENAI_API_KEY: str
     KITE_API_KEY: str
-    KITE_SECRET: str
+    KITE_API_SECRET: str
 
     # Database URLs
     MONGODB_URI: str
@@ -28,11 +28,11 @@ class Settings(BaseSettings):
     )
 
     @field_validator(
-        "TAVILY_API_KEY", 
-        "OPENAI_API_KEY", 
-        "KITE_API_KEY", 
-        "KITE_SECRET", 
-        "MONGODB_URI", 
+        "TAVILY_API_KEY",
+        "OPENAI_API_KEY",
+        "KITE_API_KEY",
+        "KITE_API_SECRET",
+        "MONGODB_URI",
         "QDRANT_URL"
     )
     @classmethod
